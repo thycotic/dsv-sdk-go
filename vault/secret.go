@@ -3,6 +3,8 @@ package vault
 import (
 	"encoding/json"
 	"log"
+	"net/url"
+	"strconv"
 )
 
 // secretsResource is the HTTP URL path component for the secrets resource
@@ -36,4 +38,49 @@ func (v Vault) Secret(path string) (*Secret, error) {
 		return nil, err
 	}
 	return secret, nil
+}
+
+// Delete deletes the secret from the DSV. Flag can be provided to force deletion
+func (s Secret) Delete(force bool) error {
+	params := url.URL{
+		RawQuery: url.Values{
+			"force": []string{strconv.FormatBool(force)},
+		}.Encode(),
+	}
+	if _, err := s.vault.accessResource("DELETE", secretsResource, s.Path+params.String(), nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Update updates the secret in DSV
+func (s Secret) Update() error {
+	data, err := s.vault.accessResource("PUT", secretsResource, s.Path, s)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(data, &s); err != nil {
+		log.Printf("[DEBUG] error parsing response from /%s: %q", secretsResource, data)
+		return err
+	}
+
+	return nil
+}
+
+// NewSecret creates a new Secret with given data
+func (v Vault) NewSecret(secret *Secret) error {
+	data, err := v.accessResource("POST", secretsResource, secret.Path, secret)
+
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(data, secret); err != nil {
+		log.Printf("[DEBUG] error parsing response from /%s: %q", secretsResource, data)
+		return err
+	}
+
+	return nil
 }
