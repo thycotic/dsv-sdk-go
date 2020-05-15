@@ -10,6 +10,12 @@ import (
 // secretsResource is the HTTP URL path component for the secrets resource
 const secretsResource = "secrets"
 
+// secretUpdateBody is the Secret composed with update specific fields
+type secretUpdateBody struct {
+	Secret
+	Overwrite bool
+}
+
 // secretResource is composed with resourceMetadata to for SecretContents
 type secretResource struct {
 	Attributes map[string]interface{}
@@ -55,8 +61,19 @@ func (s Secret) Delete(force bool) error {
 }
 
 // Update updates the secret in DSV
-func (s Secret) Update() error {
-	data, err := s.vault.accessResource("PUT", secretsResource, s.Path, s)
+func (s Secret) Update(overwrite bool) error {
+	// Force API to update empty Attributes
+	if s.Attributes != nil && len(s.Attributes) == 0 {
+		s.Attributes = map[string]interface{}{"": ""}
+		defer func() { s.Attributes = map[string]interface{}{} }()
+	}
+
+	input := secretUpdateBody{
+		Secret:    s,
+		Overwrite: overwrite,
+	}
+
+	data, err := s.vault.accessResource("PUT", secretsResource, s.Path, input)
 	if err != nil {
 		return err
 	}

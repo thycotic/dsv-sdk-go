@@ -13,7 +13,7 @@ func TestSecret(t *testing.T) {
 	var err error
 	secret := &Secret{
 		secretResource: secretResource{
-			Attributes: nil,
+			Attributes: map[string]interface{}{"Test": "Attribute"},
 			Data:       map[string]interface{}{"Secret": "Data"},
 			Path:       secretName,
 		},
@@ -29,9 +29,10 @@ func TestSecret(t *testing.T) {
 		}
 	})
 	t.Run("TestUpdateSecret", func(t *testing.T) {
+		secret.Attributes = map[string]interface{}{}
 		secret.Data["Secret"] = "NewData"
 
-		err = secret.Update()
+		err = secret.Update(true)
 
 		if err != nil {
 			t.Error("updating secret:", err)
@@ -39,6 +40,10 @@ func TestSecret(t *testing.T) {
 		}
 		if secret.Data == nil {
 			t.Error("secret.Data is nil")
+			return
+		}
+		if len(secret.Attributes) != 0 {
+			t.Error("secret.Attributes not updated")
 			return
 		}
 		if secret.Data["Secret"] != "NewData" {
@@ -54,6 +59,10 @@ func TestSecret(t *testing.T) {
 		}
 		if secret.Data == nil {
 			t.Error("secret.Data is nil")
+			return
+		}
+		if len(secret.Attributes) != 0 {
+			t.Error("secret.Attributes not updated")
 			return
 		}
 		if secret.Data["Secret"] != "NewData" {
