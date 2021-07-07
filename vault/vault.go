@@ -52,6 +52,9 @@ func New(config Configuration) (*Vault, error) {
 	if config.Credentials.ClientID == "" {
 		return nil, fmt.Errorf("Credentials.ClientID must be set")
 	}
+	if config.Credentials.ClientSecret == "" {
+		return nil, fmt.Errorf("Credentials.ClientSecret must be set")
+	}
 	if config.Tenant == "" {
 		return nil, fmt.Errorf("Tenant must be set")
 	}
@@ -67,8 +70,15 @@ func New(config Configuration) (*Vault, error) {
 // accessResource uses the accessToken to access the API resource.
 // It assumes an appropriate combination of method, resource, path and input.
 func (v Vault) accessResource(method, resource, path string, input interface{}) ([]byte, error) {
+	accessToken, err := v.getAccessToken()
+
+	if err != nil {
+		log.Print("[DEBUG] error getting accessToken:", err)
+		return nil, err
+	}
+
 	switch resource {
-	case "clients", "roles", "secrets":
+	case clientsResource, rolesResource, secretsResource:
 	default:
 		message := "unrecognized resource"
 
@@ -88,6 +98,7 @@ func (v Vault) accessResource(method, resource, path string, input interface{}) 
 	}
 
 	req, err := http.NewRequest(method, v.urlFor(resource, path), body)
+	req.Header.Add("Authorization", "Bearer "+accessToken)
 
 	if err != nil {
 		log.Printf("[DEBUG] creating req: %s /%s/%s: %s", method, resource, path, err)
@@ -101,16 +112,7 @@ func (v Vault) accessResource(method, resource, path string, input interface{}) 
 
 	log.Printf("[DEBUG] calling %s", req.URL.String())
 
-	accessToken, err := v.getAccessToken()
-
-	if err != nil {
-		log.Print("[DEBUG] error getting accessToken:", err)
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "Bearer "+accessToken)
-
-	data, _, err := handleResponse((&http.Client{}).Do(req))
+	data, err := handleResponse((&http.Client{}).Do(req))
 
 	return data, err
 }
@@ -137,7 +139,7 @@ func (v Vault) getAccessToken() (string, error) {
 
 	log.Printf("[DEBUG] calling %s with client_id %s", url, v.Credentials.ClientID)
 
-	data, _, err := handleResponse(http.Post(url, "application/json",
+	data, err := handleResponse(http.Post(url, "application/json",
 		bytes.NewReader(grantRequest)))
 
 	if err != nil {
