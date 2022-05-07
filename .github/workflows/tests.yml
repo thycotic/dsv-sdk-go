@@ -5,35 +5,34 @@ on:
     # Publish the `master` branch.
     branches:
       - master
+      - packaging
 
     # Publish `v1.2.3` tags as releases.
     tags:
       - v*
 
 env:
-  DSV_TENANT: ${{ secrets.DSV_TENANT }}
-  DSV_CLIENT_ID: ${{ secrets.DSV_CLIENT_ID }}
-  DSV_CLIENT_SECRET: ${{ secrets.DSV_CLIENT_SECRET }}
+  DSV_SDK_CONFIG: ${{ secrets.SDK_CONFIG }}
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.13
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.13
-        id: go
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+          go-version: 1.18
 
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
+
       - name: Build
-        run: go build -v .
+        run: go build -v ./...
 
       - name: Test
         run: go test ./...

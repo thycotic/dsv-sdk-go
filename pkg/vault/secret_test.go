@@ -6,14 +6,12 @@ const secretName = "/test/secret"
 
 // TestSecret tests Secret
 func TestSecret(t *testing.T) {
-	secret, err := dsv.Secret(secretName)
+	config, _ := GetConfigFromEnv()
+	vault, _ := New(*config)
 
-	if err != nil {
+	if secret, err := vault.Secret(secretName); err != nil {
 		t.Error("calling secrets.Secret:", err)
-		return
-	}
-
-	if secret.Data == nil {
+	} else if secret.Data == nil {
 		t.Error("secret.Data is nil")
 	}
 }
