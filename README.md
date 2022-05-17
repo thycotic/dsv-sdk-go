@@ -1,9 +1,9 @@
 # The Delinea DevOps Secrets Vault SDK for Go
 
-![Tests](https://github.com/delinea/dsv-sdk-go/workflows/Tests/badge.svg)
+![Tests](https://github.com/thycotic/dsv-sdk-go/workflows/Tests/badge.svg)
 
 A Golang API and examples for [Delinea](https://delinea.com/)
-[DevOps Secrets Vault](https://delinea.com/products/devops-secrets-vault-password-management/).
+[DevOps Secrets Vault](https://delinea.com/products/devops-secrets-management-vault).
 
 ## Configure
 
